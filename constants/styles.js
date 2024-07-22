@@ -1,17 +1,17 @@
 export const GlobalStyles = {
   colors: {
-    primary50: '#EDFBFC',
-    primary100: '#CBF3F6',
-    primary200: '#A8EBF0',
-    primary400: '#85E4EA',
-    primary500: '#DA627D',
-    primary700: '#2ED0DC',
-    primary800: '#21B5C0',
-    accent50: '#D0C6D2',
-    accent500: '#466362',
-    error50: '#DDDBCB',
-    error500: '#DA7D44',
-    gray500: '#536079',
-    gray700: '#212630',
+    primary50: '#F0F8FF', // Alice Blue
+    primary100: '#E6E6FA', // Lavender
+    primary200: '#B0E0E6', // Powder Blue
+    primary400: '#87CEFA', // Light Sky Blue
+    primary500: '#4682B4', // Steel Blue
+    primary700: '#4169E1', // Royal Blue
+    primary800: '#000080', // Navy
+    accent50: '#FFFACD', // Lemon Chiffon
+    accent500: '#FFD700', // Gold
+    error50: '#FDEBD0', // Papaya Whip
+    error500: '#FF6347', // Tomato
+    gray500: '#BEBEBE', // Gray
+    gray700: '#696969', // Dim Gray
   },
 };
