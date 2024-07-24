@@ -1,61 +1,88 @@
-import { useContext, useLayoutEffect } from 'react';
+import { useContext, useLayoutEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import IconButton from '../components/UI/IconButton';
 import { GlobalStyles } from '../constants/styles';
 import Button from '../components/UI/Button';
 import { ExpensesContext } from '../store/expenses-context';
 import ExpenseForm from '../components/ManageExpense/ExpenseForm';
+import { deleteExpense, storeExpense, updateExpense } from '../util/http';
+import LoadingOverlay from '../components/UI/LoadingOverlay';
+import ErrorOverlay from '../components/UI/ErrorOverlay';
+
 function ManageExpenses({ route, navigation }) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [error, setError] = useState();
+
   const editedExpenseId = route.params?.expenseId;
 
   const isEditing = !!editedExpenseId;
 
   const expensesContext = useContext(ExpensesContext);
-  console.log('Edited Expense ID:', editedExpenseId);
 
+  const selectedExpense = expensesContext.expenses.find(
+    (expenses) => expenses.id === editedExpenseId
+  );
   useLayoutEffect(() => {
     navigation.setOptions({
       title: isEditing ? 'Edit Expense' : 'Add Expense',
     });
   }, [navigation, isEditing]);
 
-  function deleteExpenseHandler() {
-    expensesContext.deleteExpense(editedExpenseId);
-    navigation.goBack();
+  async function deleteExpenseHandler() {
+    setIsSubmitting(true);
+    try {
+      await deleteExpense(editedExpenseId);
+      expensesContext.deleteExpense(editedExpenseId);
+      navigation.goBack();
+    } catch (error) {
+      setError('coudnot delete Expense Try Again later');
+      setIsSubmitting(false);
+    }
   }
 
   function cancleHandler() {
     navigation.goBack();
   }
 
-  function ConfirmHandler() {
-    if (isEditing) {
-      expensesContext.updateExpense(editedExpenseId, {
-        description: 'Update TEST',
-        amount: 1000,
-        date: new Date('2024-07-23'),
-      });
-    } else {
-      expensesContext.addExpense({
-        description: 'Add TEST',
-        amount: 9000,
-        date: new Date('2024-07-22'),
-      });
+  async function confirmHandler(expenseData) {
+    setIsSubmitting(true);
+    try {
+      if (isEditing) {
+        expensesContext.updateExpense(editedExpenseId, expenseData);
+        await updateExpense(editedExpenseId, expenseData);
+      } else {
+        const id = await storeExpense(expenseData);
+        expensesContext.addExpense({ ...expenseData, id: id });
+      }
+      navigation.goBack();
+    } catch (error) {
+      setError('could not save data please try again later');
+      setIsSubmitting(false);
     }
-    navigation.goBack();
+  }
+
+  function errorHanlder() {
+    setError(null);
+  }
+
+  if (error && !isSubmitting) {
+    return <ErrorOverlay message={error} onConfirm={errorHanlder} />;
+  }
+
+  if (isSubmitting) {
+    return <LoadingOverlay />;
   }
 
   return (
     <View style={styles.container}>
-      <ExpenseForm />
-      <View style={styles.buttons}>
-        <Button style={styles.button} onPress={ConfirmHandler}>
-          {isEditing ? 'Update' : 'Add'}
-        </Button>
-        <Button style={styles.button} mode={'flat'} onPress={cancleHandler}>
-          Cancle
-        </Button>
-      </View>
+      <ExpenseForm
+        onSubmit={confirmHandler}
+        onCancel={cancleHandler}
+        submitButtonLabel={isEditing ? 'Update' : 'Add'}
+        defaultValues={selectedExpense}
+      />
+
       {isEditing && (
         <View style={styles.deleteContainer}>
           <IconButton
@@ -78,15 +105,7 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: GlobalStyles.colors.primary800,
   },
-  buttons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  button: {
-    minWidth: 128,
-    marginHorizontal: 20,
-  },
+
   deleteContainer: {
     marginTop: 16,
     paddingTop: 8,
